@@ -65,6 +65,7 @@ public class HomeController {
 		return imageService.deleteImage(filename).then(Mono.just("redirect:/"));
 	}
 
+	@GetMapping("/")
 	public Mono<String> index(Model model) {
 		/*
 		 * It is important to understand that we don't assign a list of images to

@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author collinewaitire 8 Sep 2019
  */
-@RestController("/images")
+@RestController("/api/images")
 public class SampleController {
 
 	@GetMapping
