@@ -40,19 +40,10 @@ public class ImageService {
 	 * created when the consumer subscribes
 	 */
 	public Flux<Image> findAllImages() {
-		return imageRepository.findAll();
+		return imageRepository.findAll().log("findAll");
 	}
 
 	public Mono<Resource> findOneImage(String filename) {
-		/*
-		 * To delay fetching the file until the client subscribes, we wrap it with
-		 * Mono.fromSupplier, and put getResource inside a lambda. If we wrote
-		 * Mono.just(resourceLoader.getResource(...)), the resource fetching would
-		 * have happened immediately when the method is called. By putting it inside
-		 * a Java 8 supplier, that wont happen until the lambda is invoked. And
-		 * because it's wrapped by a Mono, invocation won't happen until the client
-		 * subscribes.
-		 */
 		return Mono.fromSupplier(() -> resourceLoader
 				.getResource("file:" + UPLOAD_ROOT + "/" + filename));
 	}
