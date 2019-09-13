@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -26,9 +27,12 @@ public class ImageService {
 
 	private static String UPLOAD_ROOT = "upload-dir";
 	private final ResourceLoader resourceLoader;
+	private final ImageRepository imageRepository;
 
-	public ImageService(ResourceLoader resourceLoader) {
+	public ImageService(ResourceLoader resourceLoader,
+			ImageRepository imageRepository) {
 		this.resourceLoader = resourceLoader;
+		this.imageRepository = imageRepository;
 	}
 
 	/**
@@ -36,19 +40,7 @@ public class ImageService {
 	 * created when the consumer subscribes
 	 */
 	public Flux<Image> findAllImages() {
-		try {
-			/*
-			 * Flux.fromIterable is used to wrap this lazy iterable - DirectoryStream,
-			 * allowing us to only pull each item as demanded by the reactive streams
-			 * client.
-			 */
-			return Flux.fromIterable(Files.newDirectoryStream(Paths.get(UPLOAD_ROOT)))
-					.map(path -> new Image(String.valueOf(path.hashCode()),
-							path.getFileName().toString()));
-
-		} catch (IOException e) {
-			return Flux.empty();
-		}
+		return imageRepository.findAll();
 	}
 
 	public Mono<Resource> findOneImage(String filename) {
@@ -66,21 +58,44 @@ public class ImageService {
 	}
 
 	public Mono<Void> createImage(Flux<FilePart> files) {
-		return files
-				.flatMap(file -> file
-						.transferTo(Paths.get(UPLOAD_ROOT, file.filename()).toFile()))
-				.then(); // then() lets us to wait for the entire Flux to finish,
-									// yielding a Mono<Void>
+		return files.flatMap(file -> {
+			Mono<Image> saveDatabaseImage = imageRepository
+					.save(new Image(UUID.randomUUID().toString(), file.filename()));
+			Mono<Void> copyFile = Mono
+					.just(Paths.get(UPLOAD_ROOT, file.filename()).toFile())
+					.log("CreateImage-picktarget").map(destFile -> {
+						try {
+							destFile.createNewFile();
+							return destFile;
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}).log("CreateImage-newFile").flatMap(file::transferTo)
+					.log("CreateImage-copy");
+			/*
+			 * To ensure both operations(saving to MongoDB and copying to the
+			 * server)are completed, join them together with Mono.when().
+			 * Mono.when() is a kin to the A+ Promise.all() API. Each file won't be
+			 * completed until the record is written to MongoDB and the file is copied
+			 * to the server. The entire flow is terminated with then() so we can
+			 * signal when all the files have been processed
+			 */
+			return Mono.when(saveDatabaseImage, copyFile);
+		}).then();
 	}
 
 	public Mono<Void> deleteImage(String filename) {
-		return Mono.fromRunnable(() -> {
+		Mono<Void> deleteDatabaseImage = imageRepository.findByName(filename)
+				.flatMap(imageRepository::delete);
+		Mono<Void> deleteFile = Mono.fromRunnable(() -> {
 			try {
 				Files.deleteIfExists(Paths.get(UPLOAD_ROOT, filename));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		});
+
+		return Mono.when(deleteDatabaseImage, deleteFile).then();
 	}
 
 	@Bean
