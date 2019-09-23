@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -47,6 +48,20 @@ public class WebDriverAutoConfigurationTests {
 				ClassUtils.isAssignable(TakesScreenshot.class, driver.getClass()))
 						.isFalse();
 		assertThat(ClassUtils.isAssignable(HtmlUnitDriver.class, driver.getClass()))
+				.isTrue();
+	}
+
+	@Test
+	public void testWithMockedFirefox() {
+		load(new Class[] { MockFirefoxConfiguration.class },
+				"com.wait.mypic.webdriver.safari.enabled:false",
+				"com.wait.mypic.webdriver.chrome.enabled:false");
+
+		WebDriver driver = context.getBean(WebDriver.class);
+		assertThat(
+				ClassUtils.isAssignable(TakesScreenshot.class, driver.getClass()))
+						.isTrue();
+		assertThat(ClassUtils.isAssignable(FirefoxDriver.class, driver.getClass()))
 				.isTrue();
 	}
 }
