@@ -75,6 +75,7 @@ public class HomeController {
 		 * fetching image data.
 		 */
 		model.addAttribute("images", imageService.findAllImages());
+		model.addAttribute("extra", "detect code changes");
 		return Mono.just("index");
 	}
 
