@@ -1,6 +1,7 @@
 package com.wait.mypic;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.wait.mypic.images.CommentReaderRepository;
 import com.wait.mypic.images.ImageService;
 
 import reactor.core.publisher.Flux;
@@ -29,9 +31,12 @@ public class HomeController {
 	private static final String FILENAME = "{filename:.+}";
 
 	private final ImageService imageService;
+	private final CommentReaderRepository repository;
 
-	public HomeController(ImageService imageService) {
+	public HomeController(ImageService imageService,
+			CommentReaderRepository repository) {
 		this.imageService = imageService;
+		this.repository = repository;
 	}
 
 	@GetMapping(value = BASE_PATH + "/" + FILENAME
@@ -76,7 +81,22 @@ public class HomeController {
 		 * Spring subscribes for the data. Only then will the code actually start
 		 * fetching image data.
 		 */
-		model.addAttribute("images", imageService.findAllImages());
+		model.addAttribute("images",
+				imageService.findAllImages()
+						.flatMap(image -> Mono.just(image)
+								.zipWith(repository.findByImageId(image.getId()).collectList()))
+						.map(imageAndComments -> new HashMap<String, Object>() {
+							/**
+							 * 
+							 */
+							private static final long serialVersionUID = 1L;
+
+							{
+								put("id", imageAndComments.getT1().getId());
+								put("name", imageAndComments.getT1().getName());
+								put("comments", imageAndComments.getT2());
+							}
+						}));
 		model.addAttribute("extra", "detect code changes");
 		return Mono.just("index");
 	}
