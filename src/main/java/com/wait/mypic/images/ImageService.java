@@ -1,4 +1,4 @@
-package com.wait.mypic;
+package com.wait.mypic.images;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.FileSystemUtils;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,10 +30,13 @@ public class ImageService {
 	private final ResourceLoader resourceLoader;
 	private final ImageRepository imageRepository;
 
+	private final MeterRegistry meterRegistry;
+
 	public ImageService(ResourceLoader resourceLoader,
-			ImageRepository imageRepository) {
+			ImageRepository imageRepository, MeterRegistry meterRegistry) {
 		this.resourceLoader = resourceLoader;
 		this.imageRepository = imageRepository;
+		this.meterRegistry = meterRegistry;
 	}
 
 	/**
@@ -63,15 +67,19 @@ public class ImageService {
 						}
 					}).log("CreateImage-newFile").flatMap(file::transferTo)
 					.log("CreateImage-copy");
+			Mono<Void> countFile = Mono.fromRunnable(() -> {
+				meterRegistry.summary("files.uploaded.bytes")
+						.record(Paths.get(UPLOAD_ROOT, file.filename()).toFile().length());
+			});
 			/*
 			 * To ensure both operations(saving to MongoDB and copying to the
-			 * server)are completed, join them together with Mono.when().
-			 * Mono.when() is a kin to the A+ Promise.all() API. Each file won't be
-			 * completed until the record is written to MongoDB and the file is copied
-			 * to the server. The entire flow is terminated with then() so we can
-			 * signal when all the files have been processed
+			 * server)are completed, join them together with Mono.when(). Mono.when()
+			 * is a kin to the A+ Promise.all() API. Each file won't be completed
+			 * until the record is written to MongoDB and the file is copied to the
+			 * server. The entire flow is terminated with then() so we can signal when
+			 * all the files have been processed
 			 */
-			return Mono.when(saveDatabaseImage, copyFile);
+			return Mono.when(saveDatabaseImage, copyFile, countFile);
 		}).then();
 	}
 

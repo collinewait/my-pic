@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.wait.mypic.images.Image;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

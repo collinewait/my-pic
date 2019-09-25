@@ -1,4 +1,4 @@
-package com.wait.mypic;
+package com.wait.mypic.images;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

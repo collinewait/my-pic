@@ -1,4 +1,4 @@
-package com.wait.mypic;
+package com.wait.mypic.images;
 
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 

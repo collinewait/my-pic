@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Component;
 
+import com.wait.mypic.images.Image;
+
 /**
  * @author collinewaitire 13 Sep 2019
  */

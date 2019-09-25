@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
+import com.wait.mypic.images.Image;
+
 /**
  * @author collinewaitire 14 Sep 2019
  */

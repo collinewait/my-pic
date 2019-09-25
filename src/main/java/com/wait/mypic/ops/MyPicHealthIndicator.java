@@ -1,4 +1,4 @@
-package com.wait.mypic;
+package com.wait.mypic.ops;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
