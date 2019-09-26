@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 /**
  * @author collinewaitire 25 Sep 2019
  */
@@ -17,14 +19,22 @@ import org.springframework.stereotype.Service;
 public class CommentService {
 
 	private CommentWritterRepository repository;
+	private final MeterRegistry meterRegistry;
 
-	public CommentService(CommentWritterRepository repository) {
+	public CommentService(CommentWritterRepository repository,
+			MeterRegistry meterRegistry) {
 		this.repository = repository;
+		this.meterRegistry = meterRegistry;
 	}
 
 	@RabbitListener(bindings = @QueueBinding(value = @Queue, exchange = @Exchange(value = "my-pic"), key = "comments.new"))
 	public void save(Comment newComment) {
-		repository.save(newComment).log("CommentService-save").subscribe();
+		repository.save(newComment).log("CommentService-save")
+				.subscribe(comment -> {
+					meterRegistry
+							.counter("comments.consumed", "imageId", comment.getImageId())
+							.increment();
+				});
 	}
 
 	@Bean
