@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: my-pic-comments
+          group: my-pic
+        output:
+          destination: my-pic-comments
+          group: my-pic
+          
+logging:
+  level:
+    org:
+      springframework:
+        cloud: DEBUG
+        integration: DEBUG
+          

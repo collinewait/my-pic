@@ -2,6 +2,7 @@ package com.wait.mypic.comments;
 
 import org.springframework.data.repository.Repository;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -15,8 +16,11 @@ import reactor.core.publisher.Mono;
  * kept over in the images package.
  */
 public interface CommentWritterRepository extends Repository<Comment, String> {
-	Mono<Comment> save(Comment newComment);
+
+	Flux<Comment> saveAll(Flux<Comment> newComment);
 
 	// Needed to support save()
 	Mono<Comment> findById(String id);
+	
+	Mono<Void> deleteAll();
 }
