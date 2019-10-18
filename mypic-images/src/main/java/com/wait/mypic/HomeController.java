@@ -2,11 +2,8 @@ package com.wait.mypic;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
@@ -18,9 +15,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.RestTemplate;
 
-import com.wait.mypic.images.Comment;
+import com.wait.mypic.images.CommentHelper;
 import com.wait.mypic.images.ImageService;
 
 import reactor.core.publisher.Flux;
@@ -36,11 +32,12 @@ public class HomeController {
 
 	private final ImageService imageService;
 
-	private final RestTemplate restTemplate;
+	private final CommentHelper commentHelper;
 
-	public HomeController(ImageService imageService, RestTemplate restTemplate) {
+	public HomeController(ImageService imageService,
+			CommentHelper commentHelper) {
 		this.imageService = imageService;
-		this.restTemplate = restTemplate;
+		this.commentHelper = commentHelper;
 	}
 
 	@GetMapping(value = BASE_PATH + "/" + FILENAME
@@ -85,11 +82,7 @@ public class HomeController {
 					{
 						put("id", image.getId());
 						put("name", image.getName());
-						put("comments",
-								restTemplate.exchange("http://COMMENTS/comments/{imageId}",
-										HttpMethod.GET, null,
-										new ParameterizedTypeReference<List<Comment>>() {
-										}, image.getId()).getBody());
+						put("comments", commentHelper.getComments(image));
 					}
 				}));
 
