@@ -6,4 +6,4 @@ spring:
     config:
       server:
         git:
-          uri: 
+          uri: https://github.com/collinewait/mypic-config-repo
