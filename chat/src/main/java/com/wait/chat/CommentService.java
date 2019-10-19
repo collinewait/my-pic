@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
  * Instead we pipe them into a websocket session.
  */
 @Service
-@EnableBinding
+@EnableBinding(Sink.class)
 public class CommentService implements WebSocketHandler {
 	private static final Logger log = LoggerFactory.getLogger(CommentService.class);
 
