@@ -54,5 +54,25 @@
 			<p><input type="submit" value="upload" /></p>
 		</form>
 	</div>
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		(function() {
+			var socket = new WebSocket('ws://localhost:8200/topic/comments.new');
+			socket.onopen = function(event) {
+				console.log('Connected to chat service!');
+				console.log(event);
+			}
+			socket.onmessage = function(event) {
+				console.log('Received ' + event.data + '!');
+				var parsedMessage = JSON.parse(event.data);
+				var ul = document.getElementById('comments-' + parsedMessage.imageId);
+				var li = document.createElement('li');
+				li.appendChild(
+						document.createTextNode(parsedMessage.comment));
+				ul.appendChild(li);
+			}
+		})();
+		/*]]>*/
+	</script>
 </body>
 </html>
