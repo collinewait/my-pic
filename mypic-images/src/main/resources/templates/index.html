@@ -8,8 +8,10 @@
 <body>
 
 	<h1>My pic</h1>
-	<h3>Live reload enabled</h3>
-	<h4 th:text="${extra}"></h4>
+
+	<input id="username" type="text" />
+    <button id="connect">Connect</button>
+    <button id="disconnect" style="display: none">Disconnect</button>
 	
 	<div>
 		<table>
@@ -51,7 +53,7 @@
 			<p><input type="submit" value="upload" /></p>
 		</form>
 		
-		<div id="chatBox">
+		<div id="chatBox" style="display: none">
 			Greetings!
 			<br />
 			<textarea id="chatDisplay" rows="10" cols="80" disabled></textarea>
@@ -85,6 +87,35 @@
 					})
 				});
 			
+			let usernameinput = null;
+			let outboundChatMessages = null;
+			let inboundChatMessages = null;
+			
+			document.getElementById('connect')
+			.addEventListener('click', function() {
+				document.getElementById('connect').style.display = 'none';
+				document.getElementById('disconnect').style.display = 'inline';
+				
+				usernameinput = document.getElementById('username');
+				
+				document.getElementById('chatBox').style.display = 'inline';
+			})
+			
+			
+			document.getElementById('disconnect')
+                    .addEventListener('click', function () {
+                        document.getElementById('connect').style.display = 'inline';
+                        document.getElementById('disconnect').style.display = 'none';
+                        document.getElementById('chatBox').style.display = 'none';
+
+                        if (outboundChatMessages != null) {
+                            outboundChatMessages.close();
+                        }
+                        if (inboundChatMessages != null) {
+                            inboundChatMessages.close();
+                        }
+                    });
+			
 			let socket = new WebSocket('ws://localhost:8200/topic/comments.new');
 			socket.onopen = function(event) {
 				console.log('Connected to chat service!');
@@ -101,7 +132,7 @@
 				console.log('parsedMessage.comment', parsedMessage.comment);
 			}
 			
-			const outboundChatMessages = new WebSocket('ws://localhost:8200/app/chatMessage.new')
+			outboundChatMessages = new WebSocket('ws://localhost:8200/app/chatMessage.new')
 			
 			// post new chat messages
 			outboundChatMessages.onopen = function(event) {
@@ -115,7 +146,7 @@
 					});
 			}
 			
-			const inboundChatMessages = new WebSocket('ws://localhost:8200/topic/chatMessage.new');
+			inboundChatMessages = new WebSocket('ws://localhost:8200/topic/chatMessage.new?user=' + usernameinput.value);
 			
 			// Listen for new chat messages
 			inboundChatMessages.onmessage = function(event) {
