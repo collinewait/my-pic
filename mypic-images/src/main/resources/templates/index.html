@@ -50,6 +50,17 @@
 			<p><input type="file" name="file" /></p>
 			<p><input type="submit" value="upload" /></p>
 		</form>
+		
+		<div id="chatBox">
+			Greetings!
+			<br />
+			<textarea id="chatDisplay" rows="10" cols="80" disabled></textarea>
+			<br />
+			<input id="chatInput" type="text" style="width: 500px" value="" />
+			<br />
+			<button id="chatButton">Send</button>
+			<br />
+		</div>
 	</div>
 	<script th:inline="javascript">
 		/*<![CDATA[*/
@@ -88,6 +99,29 @@
 						document.createTextNode(parsedMessage.comment));
 				ul.appendChild(li);
 				console.log('parsedMessage.comment', parsedMessage.comment);
+			}
+			
+			const outboundChatMessages = new WebSocket('ws://localhost:8200/app/chatMessage.new')
+			
+			// post new chat messages
+			outboundChatMessages.onopen = function(event) {
+				document.getElementById('chatButton')
+					.addEventListener('click', function() {
+						let chatInput = document.getElementById('chatInput');
+						console.log('Publishing "' + chatInput.value + '""');
+						outboundChatMessages.send(chatInput.value);
+						chatInput.value = '';
+						chatInput.focus();
+					});
+			}
+			
+			const inboundChatMessages = new WebSocket('ws://localhost:8200/topic/chatMessage.new');
+			
+			// Listen for new chat messages
+			inboundChatMessages.onmessage = function(event) {
+				console.log('Received ' + event.data);
+				let chatDisplay = document.getElementById('chatDisplay');
+				chatDisplay.value = chatDisplay.value + event.data + '\n';
 			}
 		})();
 		/*]]>*/
