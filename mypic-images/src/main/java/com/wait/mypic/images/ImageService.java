@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.FileSystemUtils;
@@ -80,6 +81,7 @@ public class ImageService {
 		}).then();
 	}
 
+	@PreAuthorize("hasRole('ADMIN') or " + "@imageRepository.findByName(#filename).owner " + "== authentication.name")
 	public Mono<Void> deleteImage(String filename) {
 		Mono<Void> deleteDatabaseImage = imageRepository.findByName(filename).flatMap(imageRepository::delete);
 		Mono<Void> deleteFile = Mono.fromRunnable(() -> {
