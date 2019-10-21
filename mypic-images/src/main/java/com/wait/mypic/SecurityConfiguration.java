@@ -1,4 +1,4 @@
-package com.wait.mypic.ops;
+package com.wait.mypic;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;

@@ -36,6 +36,7 @@ public class HomeController {
 					{
 						put("id", image.getId());
 						put("name", image.getName());
+						put("owner", image.getOwner());
 						put("comments", commentHelper.getComments(image));
 					}
 				}));

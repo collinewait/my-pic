@@ -4,7 +4,7 @@
 	<table>
 		<thead>
 			<tr>
-				<th>Id</th><th>Name</th><th>Image</th><th></th>
+				<th>Id</th><th>Name</th><th>Image</th><th></th><th>Owner</th><th>Comments</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -21,6 +21,7 @@
 						<input type="submit" value="delete" />
 					</form>
 				</td>
+				<td th:text="${image.owner}" />
 				<td>
 					<ul th:id="'comments-' + ${image.id}">
 						<li th:each="comment : ${image.comments}"

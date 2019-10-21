@@ -1,11 +1,13 @@
 package com.wait.mypic.images;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,8 +33,7 @@ public class UploadController {
 		this.imageService = imageService;
 	}
 
-	@GetMapping(value = BASE_PATH + "/" + FILENAME
-			+ "/raw", produces = MediaType.IMAGE_JPEG_VALUE)
+	@GetMapping(value = BASE_PATH + "/" + FILENAME + "/raw", produces = MediaType.IMAGE_JPEG_VALUE)
 	@ResponseBody
 	public Mono<ResponseEntity<?>> oneRawImage(@PathVariable String filename) {
 		return imageService.findOneImage(filename).map(resource -> {
@@ -40,16 +41,15 @@ public class UploadController {
 				return ResponseEntity.ok().contentLength(resource.contentLength())
 						.body(new InputStreamResource(resource.getInputStream()));
 			} catch (IOException e) {
-				return ResponseEntity.badRequest()
-						.body("Couldn't find " + filename + " => " + e.getMessage());
+				return ResponseEntity.badRequest().body("Couldn't find " + filename + " => " + e.getMessage());
 			}
 		});
 	}
 
 	@PostMapping(value = BASE_PATH)
-	public Mono<String> createFile(
-			@RequestPart(name = "file") Flux<FilePart> files) {
-		return imageService.createImage(files).then(Mono.just("redirect:/"));
+	public Mono<String> createFile(@RequestPart("file") Flux<FilePart> files,
+			@AuthenticationPrincipal Principal principal) {
+		return imageService.createImage(files, principal).then(Mono.just("redirect:/"));
 	}
 
 	@DeleteMapping(BASE_PATH + "/" + FILENAME)

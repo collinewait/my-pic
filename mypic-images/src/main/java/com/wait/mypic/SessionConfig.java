@@ -1,4 +1,4 @@
-package com.wait.mypic.ops;
+package com.wait.mypic;
 
 import org.springframework.session.data.mongo.config.annotation.web.reactive.EnableMongoWebSession;
 
