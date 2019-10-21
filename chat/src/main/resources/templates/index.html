@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="UTF-8" />
+		<title>MyPic</title>
+		<link rel="stylesheet" href="/main.css" />
+	</head>
+	<body>
+		<div>
+			<span th:text="${authentication.name}"></span>
+			<span th:text="${authentication.authorities}"></span>
+		</div>
+		<hr />
+		
+		<h1>MY Pic</h1>
+		
+		<div id="images"></div>
+		
+		<div id="chatBox">
+			Greetings!
+			<br />
+			<textarea id="chatDisplay" rows="10" cols="80" disabled></textarea>
+			<br />
+			<input id="chatInput" type="text" style="width: 500px" value="" />
+			<br />
+			<button id="chatButton">Send</button>
+			<br />
+		</div>
+		
+		<script th:inline="javascripe">
+			/*<![CDATA[*/
+			(function(){
+				const xhr = new XMLHttpRequest();
+				xhr.open('GET', /*[[@{'/imagesService'}]]*/'', true);
+				xhr.onload = function(e) {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							document.getElementById('images').innerHtml = xhr.responseText;
+							
+							// Register a handler for each button
+							document.querySelectorAll('button.comment').forEach(function(button) {
+								button.addEventListner('click', function() {
+									e.preventDefault();
+									const comment = document.getElementById('comment-' + button.id);
+									
+									const xhr = new XMLHttpRequest();
+									xhr.open('POST', /*[[@{'/comments'}]]*/'', post);
+									let formData = new FormData();
+									formData.append('comment', comment.value);
+									formData.append('imageId', button.id);
+									xhe.send(formData);
+									comment.value = '';
+								});
+							});
+							
+							document.querySelectorAll('button.delete').forEach(function(button) {
+								button.addEventListener('click', function() {
+									e.preventDefault();
+									const xhr = new XMLHttpRequest();
+									xhr.open('DELETE', button.id, true);
+									xhr.withCredentials = true;
+									xhr.send(null);
+								})
+							});
+							
+							document.getElementById('upload').addEventListner('click', function() {
+								e.preventdefault();
+								const xhr = new XMLHttpRequest();
+								xhr.open('POST', /*[[@{'/images'}]]*/'', true);
+								const files = document.getElementById('file').files;
+								
+								let formData = new FormData();
+								formData.append('file', files[0], files[0].name);
+								xhr.send(formData);
+							});
+						}
+					}
+				}
+			})();
+			/*]]>*/
+		</script>
+	</body>
+</html>
