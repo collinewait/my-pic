@@ -17,7 +17,7 @@ public class InitUsers {
 			operations.dropCollection(User.class);
 
 			operations.insert(new User(null, "colline", "wait", new String[] { "ROLE_USER", "ROLE_ADMIN" }));
-			operations.insert(new User(null, "paul", "Ona", new String[] { "ROLE_USER" }));
+			operations.insert(new User(null, "paul", "ona", new String[] { "ROLE_USER" }));
 
 			operations.findAll(User.class).forEach(user -> {
 				System.out.println("Loaded " + user);

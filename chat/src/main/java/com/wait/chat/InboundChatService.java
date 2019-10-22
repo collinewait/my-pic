@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
  */
 @Service
 @EnableBinding(ChatServiceStreams.class)
-public class InboundChatService extends UserParsingHandshakeHandler {
+public class InboundChatService extends AuthorizedWebSocketHandler {
 
 	private final ChatServiceStreams chatServiceStreams;
 
@@ -22,17 +22,16 @@ public class InboundChatService extends UserParsingHandshakeHandler {
 	}
 
 	@Override
-	protected Mono<Void> handleInternal(WebSocketSession session) {
-		return session.receive().log(getUser(session.getId()) + "-inbound-incoming-message")
-				.map(WebSocketMessage::getPayloadAsText).log(getUser(session.getId()) + "inbound-convert-to-text")
-				.flatMap(message -> broadcast(message, getUser(session.getId())))
-				.log(getUser(session.getId()) + "inboun-broadcast-to-broker").then();
+	protected Mono<Void> doHandle(WebSocketSession session) {
+		return session.receive().log(session.getId() + "-inbound-incoming-chat-message")
+				.map(WebSocketMessage::getPayloadAsText).log(session.getId() + "-inbound-convert-to-text")
+				.flatMap(message -> broadcast(message, session)).log(session.getId() + "-inbound-broadcast-to-broker")
+				.then();
 	}
 
-	public Mono<?> broadcast(String message, String user) {
-		return Mono.fromRunnable(() -> {
-			chatServiceStreams.clientToBroker()
-					.send(MessageBuilder.withPayload(message).setHeader(ChatServiceStreams.USER_HEADER, user).build());
-		});
+	Mono<?> broadcast(String message, WebSocketSession user) {
+		return user.getHandshakeInfo().getPrincipal()
+				.map(principal -> chatServiceStreams.clientToBroker().send(MessageBuilder.withPayload(message)
+						.setHeader(ChatServiceStreams.USER_HEADER, principal.getName()).build()));
 	}
 }

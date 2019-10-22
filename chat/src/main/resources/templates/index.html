@@ -27,28 +27,32 @@
 			<br />
 		</div>
 		
-		<script th:inline="javascripe">
+		<script th:inline="javascript">
 			/*<![CDATA[*/
 			(function(){
-				const xhr = new XMLHttpRequest();
+				let xhr = new XMLHttpRequest();
 				xhr.open('GET', /*[[@{'/imagesService'}]]*/'', true);
+				xhr.send();
+				
+				
 				xhr.onload = function(e) {
+					
 					if (xhr.readyState === 4) {
 						if (xhr.status === 200) {
-							document.getElementById('images').innerHtml = xhr.responseText;
+							document.getElementById('images').innerHTML = xhr.responseText;
 							
 							// Register a handler for each button
 							document.querySelectorAll('button.comment').forEach(function(button) {
-								button.addEventListner('click', function() {
+								button.addEventListener('click', function() {
 									e.preventDefault();
 									const comment = document.getElementById('comment-' + button.id);
 									
 									const xhr = new XMLHttpRequest();
-									xhr.open('POST', /*[[@{'/comments'}]]*/'', post);
+									xhr.open('POST', /*[[@{'/comments'}]]*/'', true);
 									let formData = new FormData();
 									formData.append('comment', comment.value);
 									formData.append('imageId', button.id);
-									xhe.send(formData);
+									xhr.send(formData);
 									comment.value = '';
 								});
 							});
@@ -60,10 +64,10 @@
 									xhr.open('DELETE', button.id, true);
 									xhr.withCredentials = true;
 									xhr.send(null);
-								})
+								});
 							});
 							
-							document.getElementById('upload').addEventListner('click', function() {
+							document.getElementById('upload').addEventListener('click', function() {
 								e.preventdefault();
 								const xhr = new XMLHttpRequest();
 								xhr.open('POST', /*[[@{'/images'}]]*/'', true);
@@ -73,9 +77,68 @@
 								formData.append('file', files[0], files[0].name);
 								xhr.send(formData);
 							});
-						}
-					}
+						} 
+					} 
 				}
+			})();
+			/*]]>*/
+		</script>
+		<script th:inline="javascript">
+			/*<![CDATA[*/
+			(function() {
+				// Send in new comments via an AJAX call
+				document.querySelectorAll('button.comment').forEach(function (button) {
+					button.addEventListener('click', function () {
+						const comment = document.getElementById('comment-' + button.id);
+						const xhr = new XMLHttpRequest();
+						xhr.open('POST', /*[[@{'/comments'}]]*/'', true);
+						
+						let formData = new FormData();
+						formData.append('comment', comment.value);
+						formData.append('imageId', button.id);
+						xhr.send(formData);
+						comment.value = '';
+					});
+				});
+				// Listen for new comments
+				let newComments = new WebSocket('ws://localhost:8200/topic/comments.new');
+				
+				newComments.onmessage = function(event) {
+					console.log('Received ' + event.data + '!');
+					const parsedMessage = JSON.parse(event.data);
+					let ul = document.getElementById(
+						'comments-' + parsedMessage.imageId);
+					let li = document.createElement('li');
+					li.appendChild(
+						document.createTextNode(parsedMessage.comment));
+					ul.appendChild(li);
+				}
+				
+				let outboundChatMessages = new WebSocket('ws://localhost:8200/app/chatMessage.new');
+				// Post new chat messages
+				outboundChatMessages.onopen = function(event) {
+					document.getElementById('chatButton')
+						.addEventListener('click', function () {
+							const chatInput = document.getElementById('chatInput');
+							console.log('Publishing "' + chatInput.value + '"');
+							outboundChatMessages.send(chatInput.value);
+							chatInput.value = '';
+							chatInput.focus();
+						});
+				}
+				
+				let inboundChatMessages = new WebSocket('ws://localhost:8200/topic/chatMessage.new');
+				// Listen for new chat messages
+				inboundChatMessages.onopen = function (event) {
+					console.log("Ready to receive chat messages");
+				}
+				
+				inboundChatMessages.onmessage = function (event) {
+					console.log('Received ' + event.data);
+					const chatDisplay = document.getElementById('chatDisplay');
+					chatDisplay.value = chatDisplay.value + event.data + '\n';
+				};
+				document.getElementById('chatInput').focus();
 			})();
 			/*]]>*/
 		</script>

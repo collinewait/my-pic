@@ -25,9 +25,9 @@ public class InitDatabase {
 		return args -> {
 			operations.dropCollection(Image.class);
 
-			operations.insert(new Image("1", "my-first-image.jpg", "Colline"));
-			operations.insert(new Image("2", "my-second-image.jpg", "Watit"));
-			operations.insert(new Image("3", "my-third-image.jpg", "Steve"));
+			operations.insert(new Image("1", "my-first-image.jpg", "colline"));
+			operations.insert(new Image("2", "my-second-image.jpg", "paul"));
+			operations.insert(new Image("3", "my-third-image.jpg", "colline"));
 
 			operations.findAll(Image.class).forEach(image -> {
 				System.out.println(image.toString());

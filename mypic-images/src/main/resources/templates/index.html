@@ -17,9 +17,8 @@
 					</a>
 				</td>
 				<td>
-					<form th:method="delete" th:action="@{'/images/' + ${image.name}}">
-						<input type="submit" value="delete" />
-					</form>
+					<button
+                        th:id="'/images/' + ${image.name}" class="delete">Delete</button>
 				</td>
 				<td th:text="${image.owner}" />
 				<td>

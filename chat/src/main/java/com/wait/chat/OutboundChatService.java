@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
  */
 @Service
 @EnableBinding(ChatServiceStreams.class)
-public class OutboundChatService extends UserParsingHandshakeHandler {
+public class OutboundChatService extends AuthorizedWebSocketHandler {
 
 	private final static Logger log = LoggerFactory.getLogger(CommentService.class);
 
@@ -33,25 +33,28 @@ public class OutboundChatService extends UserParsingHandshakeHandler {
 	@StreamListener(ChatServiceStreams.BROKER_TO_CLIENT)
 	public void listen(Message<String> message) {
 		if (chatMessageSink != null) {
-			log.info("Publishing " + message + " to wesocket");
+			log.info("Publishing " + message + " to websocket...");
 			chatMessageSink.next(message);
 		}
 	}
 
 	@Override
-	protected Mono<Void> handleInternal(WebSocketSession session) {
-		return session.send(this.flux.filter(s -> validate(s, getUser(session.getId()))).map(this::transform)
-				.map(session::textMessage).log(getUser(session.getId()) + "-outbound-wrap-as-websocket-message"))
-				.log(getUser(session.getId()) + "-outbound-publish-to-websocket");
+	protected Mono<Void> doHandle(WebSocketSession session) {
+		return session
+				.send(this.flux.filter(s -> applicable(s, session)).map(this::transform).map(session::textMessage)
+						.log(session.getId() + "-outbound-wrap-as-websocket-message"))
+				.log(session.getId() + "-outbound-publish-to-websocket");
 	}
 
-	private boolean validate(Message<String> message, String user) {
+	private boolean applicable(Message<String> message, WebSocketSession user) {
 		if (message.getPayload().startsWith("@")) {
 			String targetUser = message.getPayload().substring(1, message.getPayload().indexOf(" "));
 
 			String sender = message.getHeaders().get(ChatServiceStreams.USER_HEADER, String.class);
 
-			return user.equals(sender) || user.equals(targetUser);
+			String userName = user.getHandshakeInfo().getPrincipal().block().getName();
+
+			return userName.equals(sender) || userName.equals(targetUser);
 		} else {
 			return true;
 		}
